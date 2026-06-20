@@ -55,9 +55,6 @@ namespace {
             TraceLocalActivity(local);
             TraceLoggingWriteStart(local, "HmdShimDriver_Activate", TLArg(unObjectId, "ObjectId"));
 
-            // Activate the real device driver.
-            m_shimmedDevice->Activate(unObjectId);
-
             m_deviceIndex = unObjectId;
 
             const vr::PropertyContainerHandle_t container =
@@ -71,6 +68,10 @@ namespace {
             TraceLoggingWriteTagged(
                 local, "HmdShimDriver_Activate", TLArg(m_eyeTrackingComponent, "EyeTrackingComponent"));
             DriverLog("Eye Gaze Component: %lld", m_eyeTrackingComponent);
+
+            // Activate the real device driver.
+            // We do this late for Pimax, since Pimax EVO changed some order of initialization.
+            m_shimmedDevice->Activate(unObjectId);
 
             // Schedule updates in a background thread.
             // TODO: Can use a callback instead of a thread here, if available.

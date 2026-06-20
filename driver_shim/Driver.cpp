@@ -25,6 +25,7 @@
 #include "ShimDriverManager.h"
 #include "DetourUtils.h"
 #include "Tracing.h"
+#include "commit.h"
 
 namespace {
     using namespace driver_shim;
@@ -54,6 +55,8 @@ namespace {
 
             // Detect whether we should attempt to shim the target driver.
             if (!m_isLoaded) {
+                DriverLog("Driver version: %s", DriverCommitHash);
+
                 bool loadDriver = false;
                 try {
                     pvrResult result = pvr_initialise(&m_pvr);

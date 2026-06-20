@@ -186,6 +186,7 @@ copy $(SolutionDir)\tracing\Capture-ETL.bat $(SolutionDir)\bin\distribution\trac
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(IntDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -219,6 +220,15 @@ copy $(SolutionDir)\tracing\Capture-ETL.bat $(SolutionDir)\bin\distribution\trac
     <PostBuildEvent>
       <Message>Preparing distribution...</Message>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>for /f "tokens=* USEBACKQ" %%F in (`git rev-parse HEAD`) do set commit=%%F
+echo #define DRIVER_COMMIT_HASH "%commit%"; &gt; $(IntDir)\commit.h
+echo const char* DriverCommitHash = "%commit%"; &gt;&gt; $(IntDir)\commit.h
+</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Generating version info...</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -232,6 +242,7 @@ copy $(SolutionDir)\tracing\Capture-ETL.bat $(SolutionDir)\bin\distribution\trac
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(IntDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -267,6 +278,15 @@ copy $(SolutionDir)\tracing\Capture-ETL.bat $(SolutionDir)\bin\distribution\trac
     <PostBuildEvent>
       <Message>Preparing distribution...</Message>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>for /f "tokens=* USEBACKQ" %%F in (`git rev-parse HEAD`) do set commit=%%F
+echo #define DRIVER_COMMIT_HASH "%commit%"; &gt; $(IntDir)\commit.h
+echo const char* DriverCommitHash = "%commit%"; &gt;&gt; $(IntDir)\commit.h
+</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Generating version info...</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="DetourUtils.h" />

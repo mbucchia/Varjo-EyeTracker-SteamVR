@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright(c) 2025 Matthieu Bucchianeri
+// Copyright(c) 2026 Matthieu Bucchianeri
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,8 +35,4 @@
 #include <openvr_driver.h>
 #include <driverlog.h>
 
-#include <PVR.h>
-#include <PVR_API.h>
-#include <PVR_Interface.h>
-
-#include <detours.h>
+#include <Varjo.h>

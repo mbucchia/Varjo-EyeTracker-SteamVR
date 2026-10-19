@@ -4,7 +4,7 @@ This program shows how to shim (extend) and existing, pre-compiled, SteamVR driv
 
 DISCLAIMER: This software is distributed as-is, without any warranties or conditions of any kind. Use at your own risks.
 
-# If you are here only to get eye tracking on your Pimax Crystal, Pimax Crystal Super or Pimax Dream Air, go to the [Releases page](https://github.com/mbucchia/Pimax-EyeTracker-SteamVR/releases)
+# If you are here only to get eye tracking on your Varjo headset, go to the [Releases page](https://github.com/mbucchia/Varjo-EyeTracker-SteamVR/releases)
 
 # Developer Walkthrough
 
@@ -102,13 +102,13 @@ The gaze vector above is a unit vector that originates from the center of the he
 
 The driver shimming technique allows you to extend or modify the behavior or a driver without recompiling or altering the driver. If you are a driver developer and develop you own driver, you do not need this. This technique is helpful for driver "modders". This technique has been demonstrated in complex drivers, such as the [Virtual Desktop](https://www.vrdesktop.net/) driver for hand and full body tracking.
 
-In order to shim an existing driver, we create our own driver, with its own `HmdDriverFactory()` entry point returning an `IServerTrackedDeviceProvider` class instance. This driver will register a hook that intercepts creation of the driver we are shimming.
+In order to shim an existing driver, we create our own driver, with its own `HmdDriverFactory()` entry point returning an `IServerTrackedDeviceProvider` class instance.
 
 Our shim driver must be loaded early, which can be accomplished by providing a `defaults.vrsettings` file that sets the loading priority to a high value:
 
 ```json
 {
-  "driver_PimaxEyeTracking": {
+  "driver_Varjo_EyeTracking": {
     "loadPriority": 1000
   }
 }
@@ -130,8 +130,7 @@ Next, in our driver's activation function, `IServerTrackedDeviceProvider::Init()
             }
 
             if (loadDriver) {
-                DriverLog("Installing IVRServerDriverHost::TrackedDeviceAdded hook");
-                InstallShimDriverHook(/* Pass useful parameters here */);
+                // FIXME: Do useful stuff here.
                 m_isLoaded = true;
             }
         }
@@ -140,38 +139,28 @@ Next, in our driver's activation function, `IServerTrackedDeviceProvider::Init()
     }
 ```
 
-The `InstallShimDriverHook()` implementation shows how to install a hook for the `IVRServerDriverHost::TrackedDeviceAdded()` method. This method is the entry point for drivers to register an HMD, controller or tracker device. This is where we will inject ourselves. The current implementation hooks the `IVRServerDriverHost_006` flavor of the interface, which may need to be changed depending on the flavor that the shimmed driver uses.
-
-When our shimmed driver registers an HMD for example, our hook will be invoked, and we can wrap the `ITrackedDeviceServerDriver` class instance from the shimmed driver with the implementaion of our shim driver:
+Finally, we wish to detect when the HMD driver becomes ready, so we can start alter its behavior. We use the `IServerTrackedDeviceProvider::RunFrame()` method and poll for `VREvent_t` to detect when the HMD device is ready:
 
 ```cpp
-    DEFINE_DETOUR_FUNCTION(bool,
-                           IVRServerDriverHost_TrackedDeviceAdded,
-                           vr::IVRServerDriverHost* driverHost,
-                           const char* pchDeviceSerialNumber,
-                           vr::ETrackedDeviceClass eDeviceClass,
-                           vr::ITrackedDeviceServerDriver* pDriver) {
-        vr::ITrackedDeviceServerDriver* shimmedDriver = pDriver;
+    void RunFrame() override {
+        [...]
 
-        // Only shim the desired device class and if they are registered by the target driver.
-        if (IsTargetDriver(_ReturnAddress())) {
-            TraceLoggingWriteTagged(local, "IVRServerDriverHost_TrackedDeviceAdded", TLArg(true, "IsTargetDriver"));
-            if (eDeviceClass == vr::TrackedDeviceClass_HMD) {
-                DriverLog("Shimming new TrackedDeviceClass_HMD with HmdShimDriver");
-                shimmedDriver = CreateHmdShimDriver(pDriver /* Forward other useful parameters here */);
+        vr::VREvent_t event;
+        while (vr::VRServerDriverHost()->PollNextEvent(&event, sizeof(event))) {
+            switch (event.eventType) {
+            case vr::VREvent_TrackedDeviceActivated:
+                if (event.trackedDeviceIndex == vr::k_unTrackedDeviceIndex_Hmd) {
+                    DriverLog("HMD Ready!");
+
+                    // FIXME: Here we can create a thread that will service specific Hmd properties or components.
+                }
+                break;
             }
         }
 
-        const auto status = original_IVRServerDriverHost_TrackedDeviceAdded(
-            driverHost, pchDeviceSerialNumber, eDeviceClass, shimmedDriver);
-
-        return status;
+        [...]
     }
 ```
-
-In order to only shim the devices from the desired driver, we perform a check `IsTargetDriver()` that attempts to identify the calling driver. In our case here, we only shim HMD classes registered by the `driver_aapvr.dll` driver (Pimax).
-
-And this is it! You can now implement your own `ITrackedDeviceServerDriver` class that wraps any other driver, and insert pre-invocation and/or post-invocation code for any method.
 
 ### Useful tips for troubleshooting
 

@@ -1,6 +1,6 @@
 {
 	"alwaysActivate": true,
-	"name" : "PimaxEyeTracking",
+	"name" : "VarjoEyeTracking",
 	"redirectsDisplay": true,
 
 	"hmd_presence" :
